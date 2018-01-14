@@ -1,0 +1,1 @@
+ini adalah file yang akan kita enkripsi menggunakan salsa20
