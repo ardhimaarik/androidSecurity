@@ -11,6 +11,16 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String", "pass", "\"${hiddenPassword}\""
+
+        def ENC_KEY_1 = System.getenv("HOME")
+        def ENC_KEY_IV = System.getenv("HOME")
+
+        if (ENC_KEY_1 == null || ENC_KEY_IV == null) {
+            throw new RuntimeException("ENC_KEY_1 or ENC_KEY_IV not defined")
+        }
+
+        buildConfigField "String", "ENC_KEY_1", "\"$ENC_KEY_1\""
+        buildConfigField "String", "ENC_KEY_IV", "\"$ENC_KEY_IV\""
     }
     buildTypes {
         release {
