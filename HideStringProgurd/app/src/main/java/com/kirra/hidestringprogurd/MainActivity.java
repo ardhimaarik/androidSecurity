@@ -8,11 +8,13 @@ public class MainActivity extends AppCompatActivity {
     private static final byte[] databyte = new byte[]{
             'P','a','s','s','w','0','r','d','R','a','h','a','s','i','4','_','c','o','d','e','_','b','y','t','e'};
     private String dataBuildConfig;
+    private String dataCode;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         dataBuildConfig = BuildConfig.pass;
+        dataCode = data;
     }
 }
