@@ -1,0 +1,291 @@
+okeh kitah mulai saja tulisan ada hari ini. pada kesempatan kali ini saya akan mencoba membuat tulisan tentang "secure your application in android phone". Beberapa bulan belakangan ini saya mendapatkan beberapa kendala tentang bagaimana mengamankan secret key yang diletakkan di aplikasi android. sebenarnya saya sendiri bukan orang security yang memiliki pemahaman yang baik tentang ini, tapi setidaknya kita (sebagai seseorang application developer) bisa mengetahui bagaimana membuat applikasi yang "aman".
+
+
+
+Beberapa hari belakangan ini, beberapa blog, artikel, stackoverflow, dan sebagainya, menemani saya untuk mengetahui bagaimana membuat aplikasi android yang "aman". Sebagai informasi, google menjadikan OS androidnya menjadi open source dan kita bisa mendapatkan source code android dengan mudah. Artinya apa dari hal ini? setiap orang bisa mempelajari sistem dari android dengan secara bebas. Tetapi google tidak membuka secara bebas semua servis-servis aplikasi milik google di android ke publik. Dengan artian, kalau kia merasa nyaman dengan android yang kita miliki sekarang, itu merupakan gabungan dari sistem utama android dan servis-servis aplikasi yang google miliki.
+
+
+
+oya, sebenernya kenapa harus di ada kata-kata secret key? dan buat apa key itu biasanya digunakan? hmmm.... saya juga bingung untuk apa. wkwk... biasanya sih key rahasia itu bisa berupa:
+
+1. username & password
+
+2. token API server
+
+3. key enkripsi data
+
+4. file enkripsi
+
+5. dll (hmmm.. sebenernya ga tau lagi dan untuk itu saja penggunaan yang saya sudah gunakan)
+
+
+
+oke langsung aja, sebenernya gimana sih cara-cara orang meletakkan secret key mereka pada aplikasi android. Sejauh yang saya tau (#CMIIW) ada beberapa cara meletakkan:
+
+1. meletakkan di string.xml
+
+2. meletakkan di sourcecode (java/kotlin)
+
+3. meletakkan di BuildConfig
+
+4. amankan menggunakan ProGuard
+
+5. meletakkannya di sourcecode dan encoding 
+
+6. meletakkan menggunakan Native C/C++
+
+7. meletakkan key di "sharedpreference"
+
+8. meng-enkripsi key dengan kaystore android (AES RSA)
+
+9. meng-enkripsi file rahasia menggunakan salsa20
+
+10. meletakkan key di server
+
+11. melindungi aplikasi dari device yang di root
+
+
+
+note: 
+
+OS: Linux (Ubuntu 16.04 LTS)
+
+Android Studio: 3.0
+
+
+
+--> DOWNLOAD CODE PROGRAM <--
+
+
+
+========================================================================
+
+1. Meletakkan key (string) di string.xml (code)
+
+sebagai android programmer pasti sudah tak asing lagi dengan file resource ini. yap, string.xml digunakan untuk meletakkan teks di aplikasi android. lah kan kalau di kodingan langsung (java) juga bisa kan? nah di string.xml ini "lebih khusus" (bisa juga tidak) digunakan untuk meletakkan string yang digunakan untuk meng-konsistenkan data teks yang digunakan, biasanya digunakan oleh teks-teks yang berada di User Interface (UI). okelah saya tidak mau panjang lebar dibagian ini, langsung aja.
+
+
+
+app/src/main/res/values/string.xml
+
+<resources>
+    <string name="app_name">HideStringXml</string>
+    <string name="password">Passw0rdRahasi4</string>
+</resources>
+Buat project baru -> masukkan string seperti diatas -> Build APK(s)
+
+
+
+kenapa harus di buat APK dulu? yap, karena ketika kita ingin menggunakan aplikasi yang dibuat orang kita hanya mendapatkan APK nya saja, tanpa source code full dari aplikasi itu.
+
+
+
+jika kalian tidak mau repot membuat projek baru, bisa kita gunakan APK yang sudah saya buat dan bisa kita langsung uji coba ---> Download APK disini <---
+
+
+
+$ string app-debug.apk | grep Pass
+Passw0rdRahasi4
+nah kita baru saja mengetahui key rahasia yang diletakkan di string.xml. jadi dengan mudah kita mendapatkan informasi tersebut. 
+
+
+
+oya, "grep" digunakan untuk melakukan filter hasil pencarian, jadi saya hanya ingin mendapatkan string yang mengandung kata "Pass". 
+
+
+
+_________________________________________________________________________________
+
+2. Meletakkan key (string) di source code (Java/kotlin) (code)
+
+kalau menyimpan string di source code pasti kita sering menggunakannya ya. nah sekarang bagaimana kita tau string rahasia yang digunakan oleh orang lain dalam aplikasi androidnya.
+
+
+app/src/main/java/com/kirra/hidestringcode/MainActivity.kt
+class MainActivity : AppCompatActivity() {
+    companion object {
+        lateinit var instance: String
+        @JvmStatic lateinit var instance2: String
+        lateinit var stringfromjava1: String
+        lateinit var stringfromjava2: String
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        instance = "Passw0rdRahasi4_1"
+        instance2 = "Passw0rdRahasi4_2"
+        stringfromjava1 = Constant.data
+        stringfromjava2 = String(Constant.databyte)
+
+
+        Toast.makeText(this, stringfromjava2.toString(),Toast.LENGTH_SHORT).show()
+    }
+}
+app/src/main/java/com/kirra/hidestringcode/Constant.java
+
+public final static String data = "Passw0rdRahasi4_3";
+public static final byte[] databyte = new byte[]{
+            'P','a','s','s','w','0','r','d','R','a','h','a','s','i','4','_','5'};
+Buat project baru -> masukkan string di MainActivity.kt & Constant.java -> Build APK(s)
+
+
+
+jika kalian tidak mau repot membuat projek baru, bisa kita gunakan APK yang sudah saya buat dan bisa kita langsung uji coba ---> Download APK disini <---
+
+
+
+$ unzip app-debug.apk
+$ strings classes.dex | grep Pass
+Passw0rdRahasi4_5
+2Landroid/text/method/PasswordTransformationMethod;
+Passw0rdRahasi4_1
+Passw0rdRahasi4_2
+Passw0rdRahasi4_3
+isPassword
+nah dari hasil ekstraksi string diatas kita dapat melihat bahwa string yang disimpan dalam kode program masih dapat kita lihat semuanya.
+
+
+
+_________________________________________________________________________________
+
+3. Meletakkan key (string) di BuildConfig (code)
+
+sebagai seorang android programer pasti juga sudah tidak asing dengan file ini. BuildConfig merupakan file yang di hasilkan oleh androidstudio pada saat melakukan Build project. file ini digunakan untuk melakukan setting terhadap suatu projek, semisal application_id, version_code, version_name, dll. Setting ini bisa dilakukan di file build.gradle di dalam folder app.
+
+
+
+app/build.gradle
+
+defaultConfig {
+        ....
+
+        buildConfigField "String", "pass", "\"${hiddenPassword}\""
+
+        ....
+    }
+gradle.properties
+
+hiddenPassword=Passw0rdRahasi4
+Buat project baru -> masukkan code di build.gradle & gradle.properties -> Build APK(s)
+
+
+
+jika kalian tidak mau repot membuat projek baru, bisa kita gunakan APK yang sudah saya buat dan bisa kita langsung uji coba ---> Download APK disini <---
+
+
+
+$ unzip app-debug.apk
+$ strings classes.dex | grep Pass
+Passw0rdRahasi4
+backwardPass
+forwardPass
+isPassword
+needSolverPass
+setPassword
+skippedFirstPass
+dengan cari ini pun, menyembunyikan di BuildConfig, masih dapat di ketahui setiap string yang kita simpan secara hardcode. 
+
+
+
+_________________________________________________________________________________
+
+4. Melakukan obfuscate terhadap kode program (code)
+
+Cara yang selanjutnnya yaitu dengan melakukan obfuscate. Cara ini dilakukan dengan tujuan untuk mengacak-acak kode program. eits... tenang aja walaupun udah di acak-acak aplikasi kita masih bisa berjalan dengan baik kok. maksudnya diacak yaitu, sistem (builder) akan melakukan penggantian nama class, methode, dan variable terhadap program kita, jadi akan menjadikan kode kita yang sudah release ke publik lebih tidak mudah dibaca ketika sudah di ekstrak oleh orang lain. Android studio memiliki fitur untuk obfuscate di ProGuard, jadi kita bisa gunakan itu dengan mudah.
+
+
+
+pertama-tama kita lakukan hal yang sama untuk meletakkan text di string.xml(1), source code(2), dan BuildConfig(3). kemudian kita langsung melakukan pengaturan pada ProGuard, seperti di bawah ini.  
+
+
+
+app/build.gradle
+
+buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+app/proguard-rules.pro
+
+-keep class !com.kirra.** { *; }
+setelah selesai melakukan pengaturan diatas kita bisa langsung melakukan build APK. untuk informasi saja, kita melakukan setting ProGuard untuk Build Type release, yang sebelumnya kita harus melakukan sign apk dengan membuat file .jks terlebih dahulu.
+
+
+
+untuk memudahkan mencobanya saya sudah siapkan APK untuk kita coba saja. 
+
+---> Download APK disini <---
+
+
+
+app-debug.apk
+
+$ strings app-debug.apk | grep Pass
+Passw0rdRahasi4_xml
+
+$ unzip app-debug.apk
+$ strings classes.dex | grep Pass
+Passw0rdRahasi4_code_byte
+2Landroid/text/method/PasswordTransformationMethod;
+Passw0rdRahasi4_buildconfig
+Passw0rdRahasi4_code_string
+backwardPass
+forwardPass
+isPassword
+needSolverPass
+setPassword
+skippedFirstPass
+app-release.apk
+
+$ strings app-release.apk | grep Pass
+Passw0rdRahasi4_xml
+
+$ unzip app-release.apk
+$ strings classes.dex | grep Pass
+Passw0rdRahasi4_code_byte
+2Landroid/text/method/PasswordTransformationMethod;
+Passw0rdRahasi4_buildconfig
+backwardPass
+forwardPass
+isPassword
+setPassword
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+referensi:
+
+1. https://id.wikipedia.org/wiki/Android_(sistem_operasi)
+
+2. https://source.android.com/
+
+3. https://rammic.github.io/2015/07/28/hiding-secrets-in-android-apps/
+
+4. https://github.com/yukuku/kbbi4/tree/master/android
+
+5. https://medium.com/@ericfu/securely-storing-secrets-in-an-android-application-501f030ae5a3
+
+6. 
+
+
+
+
