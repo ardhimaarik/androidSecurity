@@ -6,6 +6,6 @@ package com.kirra.hidestringcode;
 
 public class Constant {
     public final static String data = "Passw0rdRahasi4_3";
-    private static final byte[] databyte = new byte[]{
+    public static final byte[] databyte = new byte[]{
             'P','a','s','s','w','0','r','d','R','a','h','a','s','i','4','_','5'};
 }
