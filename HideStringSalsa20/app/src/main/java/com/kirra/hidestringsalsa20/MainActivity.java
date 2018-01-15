@@ -10,6 +10,7 @@ import com.kirra.hidestringsalsa20.salsa20.MainSalsa20;
 import com.kirra.hidestringsalsa20.salsa20.Salsa20OutputStream;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
     static {
         System.loadLibrary("native-lib");
     }
+    private static final String txt = "see on file explorer in folder Reader";
+    private TextView tv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,8 +32,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Example of a call to a native method
-        TextView tv = (TextView) findViewById(R.id.sample_text);
+        tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(stringFromJNI());
+        writeFileEncode("coba.txt");
     }
 
     /**
@@ -42,16 +46,14 @@ public class MainActivity extends AppCompatActivity {
     private void writeFileEncode(String s) {
         String file = s;
         try {
-            OutputStream out = new FileOutputStream(new File(Environment.getExternalStorageDirectory() , "Reader/"+s+".s"));
-            MainSalsa20 mainSalsa20 = new MainSalsa20();
-            Salsa20OutputStream salsa20 = mainSalsa20.seEncodedFile(out);
-//            EncryptOutputStream salsa20 = new EncryptOutputStream(out, "*secret**secret**secret**secret*".getBytes(), "*secret*".getBytes());
-            InputStream inputStream = getApplicationContext().getAssets().open("sync/"+file);
-
             File outputFile = new File(Environment.getExternalStorageDirectory() , "Reader");
             if (!outputFile.exists()){
                 outputFile.mkdirs();
             }
+            OutputStream out = new FileOutputStream(new File(outputFile , s+".s"));
+            MainSalsa20 mainSalsa20 = new MainSalsa20();
+            Salsa20OutputStream salsa20 = mainSalsa20.seEncodedFile(out);
+            InputStream inputStream = getApplicationContext().getAssets().open(file);
             try {
                 byte[] buffer = new byte[4 * 1024]; // or other buffer size
                 int read;
@@ -62,15 +64,16 @@ public class MainActivity extends AppCompatActivity {
 
                 salsa20.flush();
             } catch (IOException e) {
-//                    e.printStackTrace();
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             } finally {
                 salsa20.close();
                 writeFileDecode(file);
             }
             inputStream.close();
+            tv.setText(txt);
         } catch (IOException e) {
             e.printStackTrace();
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -78,12 +81,9 @@ public class MainActivity extends AppCompatActivity {
         String outputName = file;
         InputStream input = null;
         try {
-            InputStream encodedFile = getApplicationContext().getAssets().open("sync/"+file);//new FileInputStream(new File(Environment.getExternalStorageDirectory(),"Reader/dte.s"));
-//            InputStream encodedFile = new FileInputStream(new File(Environment.getExternalStorageDirectory(),"Reader/"+file+".s"));
+            InputStream encodedFile = new FileInputStream(new File(Environment.getExternalStorageDirectory(),"Reader/"+file+".s"));
             MainSalsa20 mainSalsa20 = new MainSalsa20();
             input = mainSalsa20.getDecodedFile(encodedFile);
-//            input = new EncryptInputStream(encodedFile, "*secret**secret**secret**secret*".getBytes(), "*secret*".getBytes());
-//            input = new EncryptInputStream(getApplicationContext().getAssets().open("sync/suara..s"), "*secret**secret*".getBytes(), "*secret*".getBytes());
             try {
                 File outputFile = new File(Environment.getExternalStorageDirectory() , "Reader");
                 if (!outputFile.exists())

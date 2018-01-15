@@ -8,8 +8,8 @@ import java.io.OutputStream;
  */
 
 public class MainSalsa20 {
-    private String KEY1 = "asdf";
-    private String KEY1V = "qwerty";
+    private String KEY1 = "asdfifmsnfkrjsnf";
+    private String KEY1V = "qwertykd";
 
     public Salsa20OutputStream seEncodedFile(OutputStream outputStream){
         return new Salsa20OutputStream(outputStream, KEY1.getBytes(), KEY1V.getBytes());
